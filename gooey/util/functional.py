@@ -23,6 +23,10 @@ def assoc(m, key, val):
     cpy[key] = val
     return cpy
 
+def dissoc(m, key, val):
+    cpy = deepcopy(m)
+    del cpy[key]
+    return cpy
 
 def associn(m, path, value):
     """ Copy-on-write associates a value in a nested dict """
@@ -68,7 +72,10 @@ def zipmap(keys, vals):
 
 def compact(coll):
     """Returns a new list with all falsy values removed"""
-    return list(filter(None, coll))
+    if isinstance(coll, dict):
+        return {k:v for k,v in coll.items() if v is not None}
+    else:
+        return list(filter(None, coll))
 
 
 def ifPresent(f):

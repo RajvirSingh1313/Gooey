@@ -20,6 +20,7 @@ from gooey.gui.components.sidebar import Sidebar
 from gooey.gui.components.tabbar import Tabbar
 from gooey.gui.lang.i18n import _
 from gooey.gui.processor import ProcessController
+from gooey.gui.util.time import Timing
 from gooey.gui.pubsub import pub
 from gooey.gui.util import wx_util
 from gooey.gui.util.wx_util import transactUI
@@ -45,6 +46,7 @@ class GooeyApplication(wx.Frame):
         self.footer = Footer(self, buildSpec)
         self.console = Console(self, buildSpec)
         self.layoutComponent()
+        self.timer = Timing(self)
 
         self.clientRunner = ProcessController(
             self.buildSpec.get('progress_regex'),
@@ -63,6 +65,7 @@ class GooeyApplication(wx.Frame):
         pub.subscribe(events.CONSOLE_UPDATE, self.console.logOutput)
         pub.subscribe(events.EXECUTION_COMPLETE, self.onComplete)
         pub.subscribe(events.PROGRESS_UPDATE, self.footer.updateProgressBar)
+        pub.subscribe(events.TIME_UPDATE, self.footer.updateTimeRemaining)
         # Top level wx close event
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -71,7 +74,6 @@ class GooeyApplication(wx.Frame):
 
         if self.buildSpec.get('auto_start', False):
             self.onStart()
-
 
     def applyConfiguration(self):
         self.SetTitle(self.buildSpec['program_name'])
@@ -92,8 +94,7 @@ class GooeyApplication(wx.Frame):
             else:
                 config.displayErrors()
                 self.Layout()
-
-
+        
     def onEdit(self):
         """Return the user to the settings screen for further editing"""
         with transactUI(self):
@@ -141,13 +142,45 @@ class GooeyApplication(wx.Frame):
                     if self.buildSpec.get('show_failure_modal'):
                         wx.CallAfter(modals.showFailure)
 
+    def onCancel(self):
+        """Close the program after confirming
+
+        We treat the behavior of the "cancel" button slightly
+        differently than the general window close X button only
+        because this is 'part of' the form.
+        """
+        if modals.confirmExit():
+            self.onClose()
+
 
     def onStopExecution(self):
         """Displays a scary message and then force-quits the executing
         client code if the user accepts"""
-        if self.buildSpec['show_stop_warning'] and modals.confirmForceStop():
+        if self.shouldStopExecution():
             self.clientRunner.stop()
 
+
+    def onClose(self, *args, **kwargs):
+        """Stop any actively running client program, cleanup the top
+        level WxFrame and shutdown the current process"""
+        # issue #592 - we need to run the same onStopExecution machinery
+        # when the exit button is clicked to ensure everything is cleaned
+        # up correctly.
+        if self.clientRunner.running():
+            if self.shouldStopExecution():
+                self.clientRunner.stop()
+                self.destroyGooey()
+        else:
+            self.destroyGooey()
+
+
+    def shouldStopExecution(self):
+        return not self.buildSpec['show_stop_warning'] or modals.confirmForceStop()
+
+
+    def destroyGooey(self):
+        self.Destroy()
+        sys.exit()
 
     def fetchExternalUpdates(self):
         """
@@ -161,19 +194,6 @@ class GooeyApplication(wx.Frame):
         )
         for config in self.configs:
             config.seedUI(seeds)
-
-
-    def onCancel(self):
-        """Close the program after confirming"""
-        if modals.confirmExit():
-            self.onClose()
-
-
-    def onClose(self, *args, **kwargs):
-        """Cleanup the top level WxFrame and shutdown the process"""
-        self.Destroy()
-        sys.exit()
-
 
     def layoutComponent(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -231,6 +251,7 @@ class GooeyApplication(wx.Frame):
         self.header.setSubtitle(self.buildSpec['program_description'])
         self.footer.showButtons('cancel_button', 'start_button')
         self.footer.progress_bar.Show(False)
+        self.footer.time_remaining_text.Show(False)
 
 
     def showConsole(self):
@@ -241,6 +262,10 @@ class GooeyApplication(wx.Frame):
         self.header.setSubtitle(_('running_msg'))
         self.footer.showButtons('stop_button')
         self.footer.progress_bar.Show(True)
+        self.footer.time_remaining_text.Show(False)
+        if self.buildSpec.get('timing_options')['show_time_remaining']:
+            self.timer.start()
+            self.footer.time_remaining_text.Show(True)
         if not self.buildSpec['progress_regex']:
             self.footer.progress_bar.Pulse()
 
@@ -253,6 +278,12 @@ class GooeyApplication(wx.Frame):
                    else ['edit_button', 'close_button'])
         self.footer.showButtons(*buttons)
         self.footer.progress_bar.Show(False)
+        if self.buildSpec.get('timing_options')['show_time_remaining']:
+            self.timer.stop()
+        self.footer.time_remaining_text.Show(True)
+        if self.buildSpec.get('timing_options')['hide_time_remaining_on_complete']:
+            self.footer.time_remaining_text.Show(False)
+
 
 
     def showSuccess(self):

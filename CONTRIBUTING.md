@@ -1,3 +1,5 @@
+# PLEASE STOP IGNORING THE ISSUE AND PR TEMPLATES
+
 
 ## How to Contribute 
 
@@ -9,7 +11,7 @@ Some Caveats Up Front:
 * Feedback may take time
 * Merges may take time 
 
-**--> The current release branch is [1.0.5](https://github.com/chriskiehl/Gooey/tree/1.0.5-release) <--**. All PRs should be opened against this branch. 
+**--> The current release branch is [1.0.9](https://github.com/chriskiehl/Gooey/tree/1.0.9-release) <--**. All PRs should be opened against this branch. 
 
 
 ### Getting Started: 
@@ -29,7 +31,6 @@ Release branches take the form of `{semvar}-release`. For example:
 * `2.0.0-release` 
 
 You can find the current release branch by checking out the [branches page](https://github.com/chriskiehl/Gooey/branches). 
-
 
 
 **Making Changes:**
@@ -71,18 +72,14 @@ Super Cool Person Above and Beyond Checklist Additions:
  - [ ] A sister commit in the [Examples Repo](https://github.com/chriskiehl/GooeyExamples) was created demonstrating your new feature 
 
 
+## Why is master the default branch when you don't want people submitting PRs to it? 
 
-
-
-
-
-
+In an ideal world, Github would give fine control over the semantics of what branches means what. I'd love to be able to say branch-xxx is for releases, branch-yyy is for staging, and branch-zzz for development. However, all we've got with tools of today is `default branch`. This default branch is what you get if you clone the library or pip install from source, and what you see when you land on the page. Personal preference is that this always give the healthiest view of the project possible. As such, the default branch tracks master, which houses the latest stable release, and mirrors what's in PyPi. 
 
 
 ## Code of Conduct
 
 None. Use your best judgement. 
-
 
 
 ## Grumpy Stuff:

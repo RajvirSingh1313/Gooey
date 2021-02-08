@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 from gooey import GooeyParser
 from gooey.python_bindings import argparse_to_json
 from gooey.util.functional import getin
-
+from gooey.tests import *
 
 class TestArgparse(unittest.TestCase):
 
@@ -155,6 +155,26 @@ class TestArgparse(unittest.TestCase):
             self.assertEqual(getin(item, ['data', 'default']), None)
 
 
+    def test_version_maps_to_checkbox(self):
+        testcases = [
+            [['--version'], {}, 'TextField'],
+            # we only remap if the action is version
+            # i.e. we don't care about the argument name itself
+            [['--version'], {'action': 'store'}, 'TextField'],
+            # should get mapped to CheckBox becuase of the action
+            [['--version'], {'action': 'version'}, 'CheckBox'],
+            # ditto, even through the 'name' isn't 'version'
+            [['--foobar'], {'action': 'version'}, 'CheckBox'],
+        ]
+        for args, kwargs, expectedType in testcases:
+            with self.subTest([args, kwargs]):
+                parser = argparse.ArgumentParser(prog='test')
+                parser.add_argument(*args, **kwargs)
+                result = argparse_to_json.convert(parser, num_required_cols=2, num_optional_cols=2)
+                contents = getin(result, ['widgets', 'test', 'contents'])[0]
+                self.assertEqual(contents['items'][0]['type'], expectedType)
+
+
     def test_textinput_with_list_default_mapped_to_cli_friendly_value(self):
         """
         Issue: #500
@@ -190,7 +210,7 @@ class TestArgparse(unittest.TestCase):
                 parser = ArgumentParser(prog='test_program')
                 parser.add_argument('--foo', nargs=case['nargs'], default=case['default'])
                 action = parser._actions[-1]
-                result = argparse_to_json.handle_default(action, case['w'])
+                result = argparse_to_json.handle_initial_values(action, case['w'], action.default)
                 self.assertEqual(result, case['gooey_default'])
 
     def test_nargs(self):

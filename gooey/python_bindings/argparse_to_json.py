@@ -12,14 +12,16 @@ from argparse import (
     _StoreFalseAction,
     _StoreTrueAction,
     _StoreAction,
-    _SubParsersAction)
+    _SubParsersAction,
+    _VersionAction)
 from collections import OrderedDict
 from functools import partial
 from uuid import uuid4
 
 from gooey.python_bindings.gooey_parser import GooeyParser
 from gooey.util.functional import merge, getin, identity, assoc
-
+from gooey.gui.components.options.validators import validators
+from gooey.gui.components.options.validators import collect_errors
 
 VALID_WIDGETS = (
     'FileChooser',
@@ -37,7 +39,11 @@ VALID_WIDGETS = (
     'MultiDirChooser',
     'Textarea',
     'PasswordField',
-    'Listbox'
+    'Listbox',
+    'FilterableDropdown',
+    'IntegerField',
+    'DecimalField',
+    'Slider'
 )
 
 
@@ -85,6 +91,8 @@ def convert(parser, **kwargs):
         - totally unclear what the data structures even hold
         - everything is just mushed together and gross. unwinding argparse also
           builds validators, handles coercion, and so on...
+        - converts to an entirely bespoke json mini-language that mirrors
+          the internal structure of argparse.
     Refactor plan:
         - Investigate restructuring the core data representation. As is, it is ad-hoc
           and largely tied to argparse's goofy internal structure. May be worth moving to
@@ -270,8 +278,10 @@ def categorize2(groups, widget_dict, options):
 def categorize(actions, widget_dict, options):
     _get_widget = partial(get_widget, widget_dict)
     for action in actions:
+        if is_version(action):
+            yield action_to_json(action, _get_widget(action, 'CheckBox'), options)
 
-        if is_mutex(action):
+        elif is_mutex(action):
             yield build_radio_group(action, widget_dict, options)
 
         elif is_standard(action):
@@ -345,6 +355,9 @@ def is_file(action):
     ''' action with FileType '''
     return isinstance(action.type, argparse.FileType)
 
+def is_version(action):
+    return isinstance(action, _VersionAction)
+
 def is_standard(action):
     """ actions which are general "store" instructions.
     e.g. anything which has an argument style like:
@@ -416,14 +429,23 @@ def action_to_json(action, widget, options):
 
     base = merge(item_default, {
         'validator': {
+            'type': 'ExpressionValidator',
             'test': validator,
             'message': error_msg
         },
     })
 
-    default = handle_default(action, widget)
+    if (options.get(action.dest) or {}).get('initial_value') != None:
+        value = options[action.dest]['initial_value']
+        options[action.dest]['initial_value'] = handle_initial_values(action, widget, value)
+    default = handle_initial_values(action, widget, action.default)
     if default == argparse.SUPPRESS:
         default = None
+
+
+
+    final_options = merge(base, options.get(action.dest) or {})
+    validate_gooey_options(action, widget, final_options)
 
     return {
         'id': action.option_strings[0] if action.option_strings else action.dest,
@@ -440,11 +462,33 @@ def action_to_json(action, widget, options):
             'default': default,
             'dest': action.dest,
         },
-        'options': merge(base, options.get(action.dest) or {})
+        'options': final_options
     }
 
 
+def validate_gooey_options(action, widget, options):
+    """Very basic field validation / sanity checking for
+    the time being.
 
+    Future plans are to assert against the options and actions together
+    to facilitate checking that certain options like `initial_selection` in
+    RadioGroups map to a value which actually exists (rather than exploding
+    at runtime with an unhelpful error)
+
+    Additional problems with the current approach is that no feedback is given
+    as to WHERE the issue took place (in terms of stacktrace). Which means we should
+    probably explode in GooeyParser proper rather than trying to collect all the errors here.
+    It's not super ideal in that the user will need to run multiple times to
+    see all the issues, but, ultimately probably less annoying that trying to
+    debug which `gooey_option` key had an issue in a large program.
+
+    That said "better is the enemy of done." This is good enough for now. It'll be
+    a TODO: better validation 
+    """
+    errors = collect_errors(validators, options)
+    if errors:
+        from pprint import pformat
+        raise ValueError(str(action.dest) + str(pformat(errors)))
 
 
 def choose_cli_type(action):
@@ -461,7 +505,6 @@ def coerce_default(default, widget):
         'Dropdown': safe_string,
         'Counter': safe_string
     }
-
     # Issue #321:
     # Defaults for choice types must be coerced to strings
     # to be able to match the stringified `choices` used by `wx.ComboBox`
@@ -472,17 +515,17 @@ def coerce_default(default, widget):
     return dispatcher.get(widget, identity)(cleaned)
 
 
-def handle_default(action, widget):
+def handle_initial_values(action, widget, value):
     handlers = [
         [textinput_with_nargs_and_list_default, coerse_nargs_list],
         [is_widget('Listbox'), clean_list_defaults],
-        [is_widget('Dropdown'), safe_string],
+        [is_widget('Dropdown'), coerce_str],
         [is_widget('Counter'), safe_string]
     ]
     for matches, apply_coercion in handlers:
         if matches(action, widget):
-            return apply_coercion(action.default)
-    return clean_default(action.default)
+            return apply_coercion(value)
+    return clean_default(value)
 
 
 def coerse_nargs_list(default):
@@ -555,12 +598,21 @@ def clean_default(default):
 
 def safe_string(value):
     """
-    Coerce a type to string as long as it isn't None
+    Coerce a type to string as long as it isn't None or Boolean
+    TODO: why do I have this special boolean case..?
     """
     if value is None or isinstance(value, bool):
         return value
     else:
         return str(value)
+
+
+def coerce_str(value):
+    """
+    Coerce the incoming type to string as long as it isn't None
+    """
+    return str(value) if value is not None else value
+
 
 
 def this_is_a_comment(action, widget):

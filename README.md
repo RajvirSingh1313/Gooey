@@ -39,6 +39,7 @@ Table of Contents
 - [Input Validation](#input-validation)
 - [Using Dynamic Values](#using-dynamic-values)
 - [Showing Progress](#showing-progress)
+    - [Elapsed / Remaining Time](#elapsed--remaining-time)
 - [Customizing Icons](#customizing-icons)
 - [Packaging](#packaging)
 - [Screenshots](#screenshots)
@@ -88,7 +89,7 @@ Different styling and functionality can be configured by passing arguments into 
     # options
     @Gooey(advanced=Boolean,          # toggle whether to show advanced config or not 
            language=language_string,  # Translations configurable via json
-           show_config=True,          # skip config screens all together
+           auto_start=True,           # skip config screens all together
            target=executable_cmd,     # Explicitly set the subprocess executable arguments
            program_name='name',       # Defaults to script name
            program_description,       # Defaults to ArgParse Description
@@ -159,11 +160,12 @@ Gooey does its best to choose sensible defaults based on the options it finds. C
 | Parser Action    | Widget    | Example |
 |:----------------------|-----------|------|
 | store  |  TextCtrl |  <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f54e9f5e-07c5-11e5-86e5-82f011c538cf.png"/>|
-| store_const   |     CheckBox |  <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f538c850-07c5-11e5-8cbe-864badfa54a9.png"/>|
-|   store_true|        CheckBox | <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f538c850-07c5-11e5-8cbe-864badfa54a9.png"/>|
-|  store_False  |      CheckBox|  <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f538c850-07c5-11e5-8cbe-864badfa54a9.png"/>   |
-|       append |       TextCtrl |  <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f54e9f5e-07c5-11e5-86e5-82f011c538cf.png"/>  | 
-|        count|              DropDown &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f53ccbe4-07c5-11e5-80e5-510e2aa22922.png"/> | 
+| store_const | CheckBox |<img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f538c850-07c5-11e5-8cbe-864badfa54a9.png"/>|
+| store_true | CheckBox | <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f538c850-07c5-11e5-8cbe-864badfa54a9.png"/>|
+| store_False | CheckBox|  <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f538c850-07c5-11e5-8cbe-864badfa54a9.png"/>   |
+| version | CheckBox|  <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f538c850-07c5-11e5-8cbe-864badfa54a9.png"/>   |
+| append | TextCtrl |  <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f54e9f5e-07c5-11e5-86e5-82f011c538cf.png"/>  | 
+| count | DropDown &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f53ccbe4-07c5-11e5-80e5-510e2aa22922.png"/> | 
 | Mutually Exclusive Group | RadioGroup | <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f553feb8-07c5-11e5-9d5b-eaa4772075a9.png"/>
 |choice &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|        DropDown | <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/f54e4da6-07c5-11e5-9e66-d8e6d7f18ac6.png"/> |
 
@@ -207,6 +209,12 @@ However, by dropping in `GooeyParser` and supplying a `widget` name, you can dis
 | Listbox | ![image](https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/31590191-fadd06f2-b1c0-11e7-9a49-7cbf0c6d33d1.png) |
 | BlockCheckbox | ![image](https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/46922288-9296f200-cfbb-11e8-8b0d-ddde08064247.png) <br/> The default InlineCheck box can look less than ideal if a large help text block is present. `BlockCheckbox` moves the text block to the normal position and provides a short-form `block_label` for display next to the control. Use `gooey_options.checkbox_label` to control the label text | 
 |  ColourChooser   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <p align="center"><img src="https://user-images.githubusercontent.com/21027844/72672451-0752aa80-3a0f-11ea-86ed-8303bd3e54b5.gif" width="400"></p> |
+| FilterableDropdown | <p align="center"><img src="https://raw.githubusercontent.com/chriskiehl/GooeyImages/images/readme-images/filterable-dropdown.gif" width="400"></p> |
+| IntegerField | <p align="center"><img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/integer-field.PNG" width="400"></p> |
+| DecimalField | <p align="center"><img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/decimal-field.PNG" width="400"></p> |
+| Slider | <p align="center"><img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/slider.PNG" width="400"></p> |
+
+
 
  
   
@@ -271,6 +279,9 @@ Just about everything in Gooey's overall look and feel can be customized by pass
 | progress_expr | A python expression applied to any matches found via the `progress_regex`. See: [Showing Progress](#showing-progress) for a detailed how-to |
 | hide_progress_msg | Option to hide textual progress updates which match the `progress_regex`. See: [Showing Progress](#showing-progress) for a detailed how-to |
 | disable_progress_bar_animation | Disable the progress bar |
+| timing_options | This contains the options for displaying time remaining and elapsed time, to be used with `progress_regex` and `progress_expr`. [Elapsed / Remaining Time](#elapsed--remaining-time). Contained as a dictionary with the options `show_time_remaining` and `hide_time_remaining_on_complete`. Eg: `timing_options={'show_time_remaining':True,'hide_time_remaining_on_complete':True}` |
+| show_time_remaining | Disable the time remaining text see [Elapsed / Remaining Time](#elapsed--remaining-time) |
+| hide_time_remaining_on_complete | Hide time remaining on complete screen see [Elapsed / Remaining Time](#elapsed--remaining-time) |
 | requires_shell | Controls whether or not the `shell` argument is used when invoking your program. [More info here](https://stackoverflow.com/questions/3172470/actual-meaning-of-shell-true-in-subprocess#3172488) |
 | navigation | Sets the "navigation" style of Gooey's top level window. <br>Options: <table> <thead> <tr><th>TABBED</th><th>SIDEBAR</th></tr></thead> <tbody> <tr> <td><img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/34464826-2a946ba2-ee47-11e7-92a4-4afeb49dc9ca.png" width="200" height="auto"></td><td><img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/34464847-9918fbb0-ee47-11e7-8d5f-0d42631c2bc0.png" width="200" height="auto"></td></tr></tbody></table>|
 | sidebar_title | <img src="https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/34472159-1bfedbd0-ef10-11e7-8bc3-b6d69febb8c3.png" width="250" height="auto" align="right"> Controls the heading title above the SideBar's navigation pane. Defaults to: "Actions" |
@@ -285,11 +296,12 @@ Just about everything in Gooey's overall look and feel can be customized by pass
 | terminal_panel_color | HEX value of the terminal's panel | 
 | terminal_font_color | HEX value of the font displayed in Gooey's terminal | 
 | terminal_font_family | Name of the Font Family to use in the terminal | 
-| terminal_font_weight | Weight of the font (NORMAL\|BOLD) | 
+| terminal_font_weight | Weight of the font (`constants.FONTWEIGHT_NORMAL`, `constants.FONTWEIGHT_XXX`) | 
 | terminal_font_size | Point size of the font displayed in the terminal | 
 | error_color | HEX value of the text displayed when a validation error occurs |
 | richtext_controls | Switch on/off the console support for terminal control sequences (limited support for font weight and color). Defaults to : False. See [docs](https://github.com/chriskiehl/Gooey/tree/master/docs) for additional details |
 | menus | Show custom menu groups and items (see: [Menus](#menus) |
+| clear_before_run | When true, previous output will be cleared from the terminal when running program again |
 
 
 
@@ -688,6 +700,22 @@ progress: 3/100
 ```
 
 There are lots of options for telling Gooey about progress as your program is running. Checkout the [Gooey Examples](https://github.com/chriskiehl/GooeyExamples) repository for more detailed usage and examples! 
+
+### Elapsed / Remaining Time
+
+Gooey also supports tracking elapsed / remaining time when progress is used! This is done in a similar manner to that of the project [tqdm](https://github.com/tqdm/tqdm). This can be enabled with `timing_options`, the `timing_options` argument takes in a dictionary with the keys `show_time_remaining` and `hide_time_remaining_on_complete`. The default behavior is True for `show_time_remaining` and False for `hide_time_remaining_on_complete`. This will only work when `progress_regex` and `progress_expr` are used.
+
+```python
+@Gooey(progress_regex=r"^progress: (?P<current>\d+)/(?P<total>\d+)$",
+       progress_expr="current / total * 100",
+       timing_options = {
+        'show_time_remaining':True,
+        'hide_time_remaining_on_complete':True,
+    })
+```
+
+
+![Elapsed/Remaining Time](https://github.com/chriskiehl/GooeyImages/raw/images/readme-images/gooey-estimated-finish.gif)
 
 --------------------------------------
 

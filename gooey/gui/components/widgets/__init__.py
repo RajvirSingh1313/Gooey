@@ -11,3 +11,6 @@ from .checkbox import BlockCheckbox
 from .counter import Counter
 from .radio_group import RadioGroup
 from .choosers import *
+from .dropdown_filterable import FilterableDropdown
+from .numeric_fields import IntegerField, DecimalField
+from .slider import Slider

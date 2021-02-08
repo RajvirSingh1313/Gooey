@@ -1,3 +1,4 @@
+import re
 from functools import reduce
 
 import wx
@@ -7,6 +8,7 @@ from gooey.gui.util import wx_util
 from gooey.util.functional import getin, ifPresent
 from gooey.gui.validators import runValidator
 from gooey.gui.components.util.wrapped_static_text import AutoWrappedStaticText
+from gooey.gui.components.mouse import notifyMouseEvent
 
 
 class BaseWidget(wx.Panel):
@@ -27,6 +29,9 @@ class BaseWidget(wx.Panel):
     def setValue(self, value):
         raise NotImplementedError
 
+    def setPlaceholder(self, value):
+        raise NotImplementedError
+
     def receiveChange(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -38,6 +43,20 @@ class BaseWidget(wx.Panel):
 
 
 class TextContainer(BaseWidget):
+    # TODO: fix this busted-ass inheritance hierarchy.
+    # Cracking at the seems for more advanced widgets
+    # problems:
+    #   - all the usual textbook problems of inheritance
+    #   - assumes there will only ever be ONE widget created
+    #   - assumes those widgets are all created in `getWidget`
+    #   - all the above make for extremely awkward lifecycle management
+    #      - no clear point at which binding is correct.
+    #   - I think the core problem here is that I couple the interface
+    #     for shared presentation layout with the specification of
+    #     a behavioral interface
+    #     - This should be broken apart.
+    #     - presentation can be ad-hoc or composed
+    #     - behavioral just needs a typeclass of get/set/format for Gooey's purposes
     widget_class = None
 
     def __init__(self, parent, widgetInfo, *args, **kwargs):
@@ -55,11 +74,34 @@ class TextContainer(BaseWidget):
         self.layout = self.arrange(*args, **kwargs)
         self.setColors()
         self.SetSizer(self.layout)
+        self.bindMouseEvents()
         self.Bind(wx.EVT_SIZE, self.onSize)
+
+        # 1.0.7 initial_value should supersede default when both are present
+        if self._options.get('initial_value') is not None:
+            self.setValue(self._options['initial_value'])
         # Checking for None instead of truthiness means False-evaluaded defaults can be used.
-        if self._meta['default'] is not None:
+        elif self._meta['default'] is not None:
             self.setValue(self._meta['default'])
 
+        if self._options.get('placeholder'):
+            self.setPlaceholder(self._options.get('placeholder'))
+
+        self.onComponentInitialized()
+
+    def onComponentInitialized(self):
+        pass
+
+    def bindMouseEvents(self):
+        """
+        Send any LEFT DOWN mouse events to interested
+        listeners via pubsub. see: gooey.gui.mouse for background.
+        """
+        self.Bind(wx.EVT_LEFT_DOWN, notifyMouseEvent)
+        self.label.Bind(wx.EVT_LEFT_DOWN, notifyMouseEvent)
+        self.help_text.Bind(wx.EVT_LEFT_DOWN, notifyMouseEvent)
+        self.error.Bind(wx.EVT_LEFT_DOWN, notifyMouseEvent)
+        self.widget.Bind(wx.EVT_LEFT_DOWN, notifyMouseEvent)
 
     def arrange(self, *args, **kwargs):
         wx_util.make_bold(self.label)
@@ -123,9 +165,13 @@ class TextContainer(BaseWidget):
 
 
     def getValue(self):
+        regexFunc = lambda x: bool(re.match(userValidator, x))
+
         userValidator = getin(self._options, ['validator', 'test'], 'True')
         message = getin(self._options, ['validator', 'message'], '')
-        testFunc = eval('lambda user_input: bool(%s)' % userValidator)
+        testFunc = regexFunc \
+                   if getin(self._options, ['validator', 'type'], None) == 'RegexValidator'\
+                   else eval('lambda user_input: bool(%s)' % userValidator)
         satisfies = testFunc if self._meta['required'] else ifPresent(testFunc)
         value = self.getWidgetValue()
 
@@ -142,6 +188,10 @@ class TextContainer(BaseWidget):
 
     def setValue(self, value):
         self.widget.SetValue(value)
+
+    def setPlaceholder(self, value):
+        if getattr(self.widget, 'SetHint', None):
+            self.widget.SetHint(value)
 
     def setErrorString(self, message):
         self.error.SetLabel(message)
@@ -172,6 +222,9 @@ class BaseChooser(TextContainer):
 
     def setValue(self, value):
         self.widget.setValue(value)
+
+    def setPlaceholder(self, value):
+        self.widget.SetHint(value)
 
     def getWidgetValue(self):
         return self.widget.getValue()

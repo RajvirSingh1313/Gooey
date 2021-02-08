@@ -22,15 +22,17 @@ and with that, you're ready to rock.
 
 ## Overview
 
-* Global Style Options 
+* Global Style/Layout Options 
+* Global Config Options 
 * Custom Widget Options
     * Textarea
     * BlockCheckbox  
+    * Listbox
     * RadioGroups
 * Argument Group Options  
 
 
-## Global Widget Styles    
+## Global Style / Layout Options     
 
 All widgets in Gooey (with the exception of RadioGroups) are made up of three basic components. 
 
@@ -71,6 +73,17 @@ parser.add_argument('-my-arg', gooey_options={
 | full_width | bool | This is a layout hint for this widget. When `True` the widget will fill the entire available space within a given row. Otherwise, it will be sized based on the column rules provided elsewhere. | 
 
 
+## Global Config Options 
+
+> new in 1.0.8
+
+All widgets in Gooey accept an `initial_value` option to seed the UI. 
+
+```python
+parser.add_argument('-my-arg', widget='Textarea', gooey_options={
+    'initial_value': 'Hello world!'  
+})
+```
 
 ## Individual Widget Options
 
@@ -87,6 +100,41 @@ parser.add_argument('-my-arg', widget='Textarea', gooey_options={
 })
 ``` 
 
+### IntegerField
+
+```python
+parser.add_argument('-my-arg', widget='IntegerField', gooey_options={
+    min: int, 
+    max: int, 
+    increment: int  
+})
+``` 
+
+
+### DecimalField
+
+```python
+parser.add_argument('-my-arg', widget='IntegerField', gooey_options={
+    min: float, 
+    max: float, 
+    increment: float,
+    precision: int  # 0 - 20
+})
+``` 
+
+### Slider
+
+The Slider is just a reskinned IntegerField, so it has the same options
+ 
+```python
+parser.add_argument('-my-arg', widget='Slider', gooey_options={
+    min: int, 
+    max: int, 
+    increment: int  
+})
+``` 
+
+
 ### BlockCheckbox
 
 ```python
@@ -96,6 +144,14 @@ parser.add_argument('-my-arg', widget='BlockCheckbox', gooey_options={
 })
 ```
  
+### Listbox
+
+```python
+parser.add_argument('-my-arg', widget='Listbox', gooey_options={
+    # height of the listbox in pixels
+    'height': int
+})
+```
 
 ### Radio Group  
 
